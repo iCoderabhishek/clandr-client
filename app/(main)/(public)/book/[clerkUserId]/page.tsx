@@ -1,16 +1,26 @@
-import PublicProfile from "@/components/PublicProfile";
-import { clerkClient } from "@clerk/nextjs/server";
+import PublicProfile from "@/components/PublicEventCard";
+import { publicBookingApi } from "@/lib/api";
 
 export default async function PublicProfilePage({
   params,
 }: {
-  params: Promise<{ clerkUserId: string }>;
+  params: { clerkUserId: string };
 }) {
-  const { clerkUserId } = await params;
-  const client = await clerkClient();
-  const user = await client.users.getUser(clerkUserId);
-  const { fullName } = user; // Extract the user's full name
+  const { clerkUserId } = params;
 
-  // Render PublicProfile component
-  return <PublicProfile userId={clerkUserId} fullName={fullName} />;
+  // Fetch public events via external API
+  const publicEvents = await publicBookingApi.getUserPublicEvents(clerkUserId);
+
+  // Fetch user profile from API or hardcode for now if not exposed
+  const user = {
+    fullName: publicEvents[0]?.name || "User", // fallback fullName
+  };
+
+  return (
+    <PublicProfile
+      userId={clerkUserId}
+      fullName={user.fullName}
+      events={publicEvents}
+    />
+  );
 }
